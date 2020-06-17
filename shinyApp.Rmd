@@ -1,0 +1,122 @@
+---
+title: "ShinyApp"
+author: "Jenny Biechele-Speziale"
+date: "6/16/2020"
+output: ioslides_presentation
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Making Basic Models for Swiss Fertility Data
+This presentation is about making simple models for the swiss data set. The two model options include a basic linear regression using R's lm() function, and a locally estimated scatterplot smoothing regression (or loess) using R's loess() function. 
+
+The application allows for the user to select the desired predictor (only one predictor can be chosen) and model type (either loess or basic linear regression).
+
+The user can also select the confidence bounds for the model they select.
+
+This tool gives an interactive introduction to basic model fitting. 
+
+
+## Plotting Swiss Fertility Data With Various Models:
+
+```{r eruptions}
+library(ggplot2)
+shinyApp(
+  ui=fluidPage(
+    sidebarLayout(
+        sidebarPanel(
+            radioButtons("p", "Select a Variable:",                    
+                         list("Agriculture"='Agriculture', "Examination"='Examination', "Education"='Education', "Catholic"='Catholic', "Infant Mortality"='Infant Mortality')),  
+            radioButtons("q","Select a Model Method:",
+                         list("Basic Linear Model"="lm","Loess"="loess")),
+            sliderInput("slider","Adjust the confidence bounds!",
+                        min=0,
+                        max=1,
+                        value=0.95)
+        ),
+        mainPanel(
+            h4(textOutput("model")),
+            plotOutput("distPlot")
+        ) 
+    )
+    ),
+
+# Define server logic required to draw a histogram
+server=function(input,output){
+  output$distPlot <- renderPlot({
+    if(input$p=='Agriculture'){    
+      i<-2     }
+    if(input$p=='Examination'){
+      i<-3     }
+    if(input$p=='Education'){
+      i<-4     }
+    if(input$p=='Catholic'){
+      i<-5     }
+    if(input$p=='Infant Mortality'){
+      i<-6     }
+    x <- swiss[,i]
+    df<-data.frame(swiss$Fertility,x)
+    ggplot(data=df,aes(x,swiss.Fertility))+
+      geom_smooth(aes(),method=input$q,level=input$slider)+
+      geom_point()+
+      xlab(input$p)+
+      ylim(c(25,range(swiss$Fertility)[2]))+
+      xlim(range(x))+
+      ylab("Fertility")
+  })
+  dataInput<-reactive({
+    if(input$q=="Basic Linear Model"){
+      fit<-lm(swiss.Fertility~y,df)
+    }
+    if(input$q=="Loess"){
+      fit<-loess(swiss.Fertility~y,df)
+    }
+  })
+  output$model<-renderText({
+    paste("You have selected a ", input$q, "model, comparing Fertility vs. ", input$p)
+  })
+})
+```
+
+
+## About the Data
+<font size="4">This data comes from the <b>Swiss Fertility and Socioeconomic Indicators (1888) Data</b>. This dataset offers a standardized fertility measure and socio-economic indicators for each of the 47 provinces of Switzerland in the 1888. The socio-economic indicators include:</font>
+
+<font size="4">Agriculture</font>
+
+:     <font size="3">Percent of males involved in agriculture as occupation</font>
+
+<font size="4">Examination</font>
+
+:    <font size="3">Percent of draftees receiving highest mark on army examination</font>
+  
+<font size="4">Education</font>
+
+:   <font size="3">Percent of education beyond primary school for draftees</font>
+
+<font size="4">Catholic</font>
+
+:   <font size="3">Percent of ‘catholic’ respondants (as opposed to ‘protestant’)</font>
+
+<font size="4">Infant Mortality</font>
+
+:   <font size="3">Live births who live less than 1 year</font>
+
+## Thank you!
+
+<font size="4">Check out [my github](https://github.com/ander689) for more tutorials!</font>
+
+Data Source:
+
+<font size="3"><i>Project “16P5”, pages 549–551 in</i>
+
+<i>Mosteller, F. and Tukey, J. W. (1977) Data Analysis and Regression: A Second Course in Statistics. Addison-Wesley, Reading Mass.</i>
+
+
+https://opr.princeton.edu/archive/pefp/switz.aspx</font>
+
+
+
